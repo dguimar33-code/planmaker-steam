@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanMaker STEAM - Gestão & Otimização de Aulas Maker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            navy: '#1e1b4b',
+                            purple: '#6d28d9',
+                            violet: '#8b5cf6',
+                            emerald: '#10b981',
+                            teal: '#14b8a6',
+                            cyan: '#06b6d4',
+                            accent: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Styles & Print Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Styling for print view modal */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: #000 !important;
+                background: #fff !important;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- LOGIN & REGISTER MODAL OVERLAY (LOCKS ACCESS UNTIL LOGGED IN) -->
+    <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <!-- Branding Header -->
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-violet-600 via-purple-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-purple-500/30 mb-3">
+                    <i class="fa-solid fa-cubes-stacked text-white text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">PlanMaker <span class="text-emerald-400">STEAM</span></h1>
+                <p class="text-xs text-slate-400 mt-1">Plataforma de Otimização de Planos Maker & Robótica</p>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="login-form" onsubmit="event.preventDefault(); handleAuth('login');" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-slate-300">E-mail Educacional / Pessoal</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="email" id="auth-email" required placeholder="professor@escola.edu.br" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-slate-300">Senha de Acesso</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-violet-600 to-emerald-500 hover:from-violet-500 hover:to-emerald-400 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-violet-600/25 transition duration-200">
+                    Entrar na Plataforma
+                </button>
+
+                <div class="text-center pt-2">
+                    <button type="button" onclick="toggleAuthMode('register')" class="text-xs text-slate-400 hover:text-violet-300 transition">
+                        Não tem conta? <strong class="text-emerald-400 underline">Cadastre-se gratuitamente</strong>
+                    </button>
+                </div>
+            </form>
+
+            <!-- REGISTER FORM (HIDDEN BY DEFAULT) -->
+            <form id="register-form" onsubmit="event.preventDefault(); handleAuth('register');" class="space-y-4 hidden">
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-slate-300">Nome Completo do Professor(a)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="text" id="reg-name" required placeholder="Prof. Maria Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-slate-300">E-mail</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="email" id="reg-email" required placeholder="professor@escola.edu.br" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-slate-300">Criar Senha</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                        <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-violet-600 hover:from-emerald-400 hover:to-violet-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-emerald-600/25 transition duration-200">
+                    Criar Minha Conta & Acessar
+                </button>
+
+                <div class="text-center pt-2">
+                    <button type="button" onclick="toggleAuthMode('login')" class="text-xs text-slate-400 hover:text-violet-300 transition">
+                        Já é cadastrado? <strong class="text-violet-400 underline">Fazer Login</strong>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOP HEADER / NAVIGATION -->
+    <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('generator')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-purple-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-cubes-stacked text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300">PlanMaker</span>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-bold">STEAM</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 -mt-1 font-medium">Otimizador Pedagógico Maker</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-1">
+                    <button onclick="switchTab('generator')" id="nav-generator" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-white bg-violet-600/30 border border-violet-500/40">
+                        <i class="fa-solid fa-wand-magic-sparkles text-violet-400"></i>
+                        <span>Gerador IA + BNCC</span>
+                    </button>
+                    <button onclick="switchTab('library')" id="nav-library" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800/60">
+                        <i class="fa-solid fa-database text-cyan-400"></i>
+                        <span>Banco de Planos</span>
+                        <span id="saved-count-badge" class="ml-1 bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                    </button>
+                </nav>
+
+                <!-- Quick Action Header & User Profile -->
+                <div class="hidden sm:flex items-center space-x-3">
+                    <button onclick="downloadAppSourceCode()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition" title="Baixar aplicativo completo em HTML">
+                        <i class="fa-solid fa-download text-emerald-400"></i>
+                        <span>Baixar Código App</span>
+                    </button>
+                    <button onclick="openApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-key text-amber-400"></i>
+                        <span id="api-key-status-text">Configurar API</span>
+                    </button>
+                    
+                    <!-- User Profile Dropdown / Logout -->
+                    <div class="flex items-center space-x-2 border-l border-slate-800 pl-3">
+                        <span id="user-display-email" class="text-xs text-slate-300 font-medium"></span>
+                        <button onclick="logoutUser()" class="p-1.5 text-slate-400 hover:text-rose-400 transition" title="Sair do aplicativo">
+                            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex md:hidden">
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-2 text-slate-400 hover:text-white focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-b border-slate-800 bg-slate-900 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('generator'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-violet-950/60 border border-violet-800 flex items-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-violet-400"></i>
+                <span>Gerador de Plano</span>
+            </button>
+            <button onclick="switchTab('library'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-folder-open text-slate-400"></i>
+                <span>Meus Planos</span>
+            </button>
+            <button onclick="downloadAppSourceCode()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-emerald-400 hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-download"></i>
+                <span>Baixar Código-Fonte (index.html)</span>
+            </button>
+            <button onclick="logoutUser()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-rose-400 hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sair da Conta</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ALERT / NOTIFICATION TOAST CONTAINER -->
+        <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+        <!-- TAB 1: GERADOR DE PLANOS -->
+        <section id="tab-generator" class="tab-content block">
+            
+            <!-- TOP BANNER OTIMIZADOR -->
+            <div class="mb-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-violet-950/80 via-slate-900 to-slate-900 border border-violet-800/40 relative overflow-hidden shadow-xl">
+                <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-violet-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="bg-violet-500/20 text-violet-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-violet-500/30">Cobertura do 1º Fund. ao 3º Médio • IA + BNCC</span>
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Gerador Inteligente de Aulas STEAM & Robótica</h1>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">Crie planos ajustados à maturidade da turma: da contação de histórias com robótica nos anos iniciais até sistemas complexos e itinerários do Ensino Médio.</p>
+                    </div>
+                    <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                        <button onclick="openApiKeyModal()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow transition">
+                            <i class="fa-solid fa-key"></i>
+                            <span>Chave API Gemini</span>
+                        </button>
+                        <button onclick="openPresetsModal()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow transition">
+                            <i class="fa-solid fa-graduation-cap text-amber-400"></i>
+                            <span>Projetos por Etapa</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN CREATION LAYOUT (GRID 2 COLS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- LEFT COLUMN: FORM -->
+                <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+                    <form id="steam-form" class="space-y-4" onsubmit="event.preventDefault(); generateLessonPlanWithAI();">
+                        
+                        <!-- Header Form -->
+                        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+                                <i class="fa-solid fa-sliders text-violet-400"></i>
+                                <span>Parâmetros da Aula (1º Fund - 3º EM)</span>
+                            </h2>
+                            <button type="button" onclick="resetForm()" class="text-xs text-slate-400 hover:text-rose-400 transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i>Limpar
+                            </button>
+                        </div>
+
+                        <!-- 1. Título / Tema -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Tema / Problema Central <span class="text-rose-400">*</span></label>
+                            <input type="text" id="lesson-title" required placeholder="Ex: Animais Polinizadores, Cidade Sustentável, Sistema Antissísmico" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition">
+                        </div>
+
+                        <!-- 2. Segmento & Ano Escolar Específico -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Etapa de Ensino</label>
+                                <select id="school-stage" onchange="onStageChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500 transition">
+                                    <option value="fund1" selected>Ensino Fundamental I (1º ao 5º ano)</option>
+                                    <option value="fund2">Ensino Fundamental II (6º ao 9º ano)</option>
+                                    <option value="medio">Ensino Médio (1º ao 3º ano)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Ano / Série Específica</label>
+                                <select id="specific-year" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500 transition">
+                                    <!-- Dinamicamente carregado pelo JS -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 3. Duração e Metodologia -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Duração Estimada</label>
+                                <select id="lesson-duration" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500 transition">
+                                    <option value="1 aula (50 min)">1 aula (50 min)</option>
+                                    <option value="2 aulas (100 min)" selected>2 aulas (100 min)</option>
+                                    <option value="Projeto (4 encontros)">Projeto (4 encontros)</option>
+                                    <option value="Sequência Didática (6+ aulas)">Sequência (6+ encontros)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Abordagem Metodológica</label>
+                                <select id="pedagogy-method" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500 transition">
+                                    <option value="Ciclo de Aprendizagem Maker / 5Es">Ciclo 5Es / Maker</option>
+                                    <option value="Aprendizagem Baseada em Projetos (PBL)">Projetos (PBL)</option>
+                                    <option value="Design Thinking Edu">Design Thinking Edu</option>
+                                    <option value="Gamificação & Desafios">Gamificação & Desafios</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 4. Componentes Curriculares Integrados (Dinâmicos por Etapa) -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1 flex justify-between">
+                                <span>Disciplinas Integradas <span class="text-rose-400">*</span></span>
+                                <span class="text-[10px] text-violet-400 font-normal" id="stage-subject-label">BNCC Fund I</span>
+                            </label>
+                            <div id="subjects-container" class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto custom-scrollbar p-2 bg-slate-950/70 border border-slate-800 rounded-xl">
+                                <!-- Preenchido dinamicamente via JS -->
+                            </div>
+                        </div>
+
+                        <!-- 5. Ferramentas Maker / Robótica -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Tecnologias & Kits de Robótica <span class="text-rose-400">*</span></label>
+                            <div class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto custom-scrollbar p-2 bg-slate-950/70 border border-slate-800 rounded-xl">
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="LEGO Essential / WeDo 2.0" checked class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>LEGO WeDo / Essential</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="ScratchJr / Scratch 3.0" checked class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>Scratch / ScratchJr</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="BBC micro:bit" class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>BBC micro:bit</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="Arduino / Circuitos Eletrônicos" class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>Arduino / Eletrônica</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="Sucata Reutilizável & Papelão Maker" checked class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>Sucata & Recicláveis</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="LEGO SPIKE Prime / Mindstorms EV3" class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>LEGO SPIKE / EV3</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="Tinkercad 3D & Modelagem" class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>Modelagem 3D (Tinkercad)</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                                    <input type="checkbox" name="tech" value="Makey Makey" class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                                    <span>Makey Makey</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-2">
+                            <button id="btn-generate-ai" type="submit" class="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-emerald-500 hover:from-violet-500 hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-violet-600/25 transition duration-200 flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-sparkles text-amber-300"></i>
+                                <span>Gerar Plano Adaptado com IA + BNCC</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- RIGHT COLUMN: GENERATED RESULT PREVIEW -->
+                <div class="lg:col-span-7 flex flex-col">
+                    
+                    <!-- AI LOADING STATE -->
+                    <div id="ai-loading-state" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[500px] h-full space-y-4">
+                        <div class="relative">
+                            <div class="w-16 h-16 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin"></div>
+                            <i class="fa-solid fa-brain text-violet-400 text-xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-white">Gerando Plano para o Ano Escolhido...</h3>
+                        <p id="loading-step-text" class="text-xs text-slate-400 font-medium animate-pulse">Adequando habilidades da BNCC e complexidade pedagógica...</p>
+                        <div class="w-48 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-gradient-to-r from-violet-500 to-emerald-400 h-full w-2/3 animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- EMPTY STATE -->
+                    <div id="empty-state" class="bg-slate-900/60 border border-dashed border-slate-800 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[500px] h-full">
+                        <div class="w-20 h-20 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 text-slate-500 border border-slate-700/50">
+                            <i class="fa-solid fa-wand-magic-sparkles text-3xl text-violet-400/80"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-200">Plano de Aula Inteligente por Ano Escolar</h3>
+                        <p class="text-xs text-slate-400 max-w-md mt-2 leading-relaxed">
+                            Selecione desde o <strong class="text-emerald-400 font-semibold">1º Ano do Ensino Fundamental</strong> até o <strong class="text-violet-400 font-semibold">3º Ano do Ensino Médio</strong>. A IA adapta automaticamente o vocabulário, a complexidade tecnológica e os códigos da BNCC.
+                        </p>
+                    </div>
+
+                    <!-- GENERATED CONTENT CARD -->
+                    <div id="plan-output-card" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl flex-grow flex flex-col">
+                        
+                        <!-- Actions Toolbar -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-1 rounded-md font-bold flex items-center">
+                                    <i class="fa-solid fa-robot mr-1.5 text-[10px]"></i> Plano Adaptado BNCC
+                                </span>
+                                <span id="out-segment-badge" class="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-md font-semibold"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="saveCurrentPlan()" class="bg-violet-600 hover:bg-violet-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 transition">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                    <span>Salvar no Banco</span>
+                                </button>
+                                <button onclick="downloadPlanHTML()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 transition" title="Baixar apenas este plano em HTML">
+                                    <i class="fa-solid fa-file-code"></i>
+                                    <span>Baixar HTML</span>
+                                </button>
+                                <button onclick="copyPlanToClipboard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg font-semibold border border-slate-700 flex items-center space-x-1.5 transition">
+                                    <i class="fa-solid fa-copy"></i>
+                                    <span>Copiar</span>
+                                </button>
+                                <button onclick="openPrintModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 transition">
+                                    <i class="fa-solid fa-print"></i>
+                                    <span>Imprimir / PDF</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Document View -->
+                        <div id="plan-printable-content" class="space-y-6 overflow-y-auto max-h-[650px] pr-2 custom-scrollbar">
+                            
+                            <!-- Header Info -->
+                            <div>
+                                <h2 id="out-title" class="text-2xl font-extrabold text-white tracking-tight"></h2>
+                                <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-400">
+                                    <span class="flex items-center"><i class="fa-regular fa-clock mr-1 text-violet-400"></i> Duração: <strong id="out-duration" class="ml-1 text-slate-200"></strong></span>
+                                    <span>•</span>
+                                    <span class="flex items-center"><i class="fa-solid fa-diagram-project mr-1 text-emerald-400"></i> Metodologia: <strong id="out-method" class="ml-1 text-slate-200"></strong></span>
+                                </div>
+                            </div>
+
+                            <!-- STEAM Integration Badges -->
+                            <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center">
+                                    <i class="fa-solid fa-puzzle-piece mr-1.5 text-violet-400"></i> Conexões Curriculares & Robótica
+                                </h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <div class="text-xs font-medium text-slate-300">
+                                        <span class="text-slate-400">Disciplinas:</span>
+                                        <span id="out-subjects-tags" class="ml-1 inline-flex flex-wrap gap-1"></span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs font-medium text-slate-300">
+                                    <span class="text-slate-400">Recursos Maker:</span>
+                                    <span id="out-techs-tags" class="ml-1 inline-flex flex-wrap gap-1"></span>
+                                </div>
+                            </div>
+
+                            <!-- Desafio Maker -->
+                            <div class="border-l-4 border-amber-500 bg-amber-500/5 p-4 rounded-r-xl border-y border-r border-amber-500/10">
+                                <h3 class="text-sm font-bold text-amber-400 flex items-center">
+                                    <i class="fa-solid fa-lightbulb mr-2"></i> Desafio Central & Problematização (Faixa Etária)
+                                </h3>
+                                <p id="out-challenge" class="text-xs text-slate-300 mt-1 leading-relaxed"></p>
+                            </div>
+
+                            <!-- Mapeamento Detalhado BNCC -->
+                            <div class="bg-slate-950 p-4 rounded-xl border border-violet-800/40 shadow-inner">
+                                <h4 class="text-xs font-bold text-violet-300 uppercase tracking-wider mb-3 flex items-center">
+                                    <i class="fa-solid fa-graduation-cap mr-2 text-violet-400 text-sm"></i> Mapeamento de Habilidades Oficiais da BNCC
+                                </h4>
+                                <div id="out-bncc-detailed" class="space-y-2 text-xs"></div>
+                            </div>
+
+                            <!-- Objetivos Pedagógicos -->
+                            <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center">
+                                    <i class="fa-solid fa-bullseye mr-1.5"></i> Objetivos Pedagógicos STEAM
+                                </h4>
+                                <ul id="out-objectives" class="text-xs text-slate-300 space-y-1.5 list-disc list-inside"></ul>
+                            </div>
+
+                            <!-- Passo a Passo -->
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center">
+                                    <i class="fa-solid fa-list-check mr-2 text-violet-400"></i> Roteiro da Aula (Sequência Maker)
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-violet-400">1. ENGAJAR & INVESTIGAR (Engage)</span>
+                                        </div>
+                                        <p id="out-step-1" class="text-xs text-slate-300 leading-relaxed"></p>
+                                    </div>
+                                    <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-cyan-400">2. EXPLORAR CONCEITOS (Explore)</span>
+                                        </div>
+                                        <p id="out-step-2" class="text-xs text-slate-300 leading-relaxed"></p>
+                                    </div>
+                                    <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-emerald-400">3. PROTOTIPAR & PROGRAMAR (Explain/Engineer)</span>
+                                        </div>
+                                        <p id="out-step-3" class="text-xs text-slate-300 leading-relaxed"></p>
+                                    </div>
+                                    <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-amber-400">4. TESTAR, APRESENTAR & AVALIAR (Evaluate)</span>
+                                        </div>
+                                        <p id="out-step-4" class="text-xs text-slate-300 leading-relaxed"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Materiais & Rubrica -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center">
+                                        <i class="fa-solid fa-boxes-packing mr-1.5 text-orange-400"></i> Lista de Materiais & Kits
+                                    </h4>
+                                    <ul id="out-materials" class="text-xs text-slate-300 space-y-1 list-disc list-inside"></ul>
+                                </div>
+                                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center">
+                                        <i class="fa-solid fa-clipboard-check mr-1.5 text-purple-400"></i> Rubrica de Avaliação Maker
+                                    </h4>
+                                    <div id="out-rubric" class="text-xs text-slate-300 space-y-1.5"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: MEUS PLANOS GUARDADOS -->
+        <section id="tab-library" class="tab-content hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-database text-cyan-400"></i>
+                            <span>Banco de Planos STEAM (1º Fund. ao 3º Médio)</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Filtre, exporte em backup ou importe planos em JSON.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <select id="filter-stage-library" onchange="renderSavedPlans()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                            <option value="all">Todas as Etapas</option>
+                            <option value="Fund I">Ensino Fundamental I</option>
+                            <option value="Fund II">Ensino Fundamental II</option>
+                            <option value="Médio">Ensino Médio</option>
+                        </select>
+                        <input type="text" id="search-saved" oninput="renderSavedPlans()" placeholder="Buscar por título, BNCC..." class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 w-full sm:w-48">
+                        <button onclick="exportDatabaseJSON()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs px-3 py-2 rounded-xl border border-slate-700 flex items-center space-x-1" title="Exportar Backup em JSON">
+                            <i class="fa-solid fa-download mr-1"></i>Backup
+                        </button>
+                        <label class="bg-slate-800 hover:bg-slate-700 text-violet-300 text-xs px-3 py-2 rounded-xl border border-slate-700 flex items-center space-x-1 cursor-pointer" title="Importar arquivo JSON de planos">
+                            <i class="fa-solid fa-upload mr-1"></i>Importar
+                            <input type="file" id="import-json-input" onchange="importDatabaseJSON(event)" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Grid de Planos Salvos -->
+                <div id="saved-plans-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dinamicamente preenchido via JS -->
+                </div>
+
+                <!-- Empty Library State -->
+                <div id="empty-library" class="hidden py-16 text-center">
+                    <i class="fa-solid fa-folder-plus text-4xl text-slate-700 mb-3"></i>
+                    <p class="text-sm font-semibold text-slate-400">Nenhum plano encontrado para este filtro.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PRESETS / EXEMPLOS POR ETAPA MODAL -->
+    <div id="presets-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 shrink-0">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <span>Modelos de Projetos STEAM por Etapa Escolar</span>
+                </h3>
+                <button onclick="closePresetsModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 overflow-y-auto custom-scrollbar pr-1 flex-grow">
+                <!-- Modelo Fund 1 -->
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-emerald-500/50 cursor-pointer transition" onclick="applyPreset(0)">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-bold">1º ao 5º Ano (Fund I)</span>
+                        <span class="text-xs text-slate-400 font-semibold">1º/2º Ano</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-white">Contação de Histórias Animada e Insetos Maker</h4>
+                    <p class="text-xs text-slate-400 mt-1">Integra Português (Alfabetização), Ciências e LEGO WeDo / ScratchJr para motorizar personagens e criar um habitat de sucata.</p>
+                </div>
+
+                <!-- Modelo Fund 2 -->
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-violet-500/50 cursor-pointer transition" onclick="applyPreset(1)">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] bg-violet-950 text-violet-400 border border-violet-800 px-2 py-0.5 rounded font-bold">6º ao 9º Ano (Fund II)</span>
+                        <span class="text-xs text-slate-400 font-semibold">7º Ano</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-white">Estufa Automatizada com micro:bit e Irrigação Inteligente</h4>
+                    <p class="text-xs text-slate-400 mt-1">Integra Ciências, Matemática e BBC micro:bit para construir sensores de umidade de solo reutilizando garrafas PET.</p>
+                </div>
+
+                <!-- Modelo Ensino Médio -->
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-cyan-500/50 cursor-pointer transition" onclick="applyPreset(2)">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded font-bold">Ensino Médio (1º ao 3º EM)</span>
+                        <span class="text-xs text-slate-400 font-semibold">2º EM</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-white">Sistema Antissísmico e Automação de Segurança com Arduino</h4>
+                    <p class="text-xs text-slate-400 mt-1">Integra Física (Ondulatória/Mecânica), Matemática Aplicada, Impressão 3D e Arduino para simular resistência a terremotos em maquetes urbanas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API KEY MODAL -->
+    <div id="apikey-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-amber-400"></i>
+                    <span>Configurar Chave API Gemini</span>
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                Insira sua chave da API Google Gemini. O aplicativo gera planos adaptados à BNCC usando a inteligência artificial `gemini-3-flash-preview`.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500">
+                </div>
+                <div class="flex items-center justify-end space-x-2">
+                    <button onclick="saveApiKeyFromModal()" class="bg-violet-600 hover:bg-violet-500 text-white text-xs px-4 py-2 rounded-xl font-bold">
+                        Salvar Chave
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT / PDF VIEW MODAL -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-950/90 z-50 hidden overflow-y-auto p-4 sm:p-8">
+        <div class="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl p-8 shadow-2xl relative" id="printable-area">
+            <div class="no-print flex justify-between items-center border-b pb-4 mb-6">
+                <span class="text-xs font-bold text-slate-500 uppercase">Visualização de Impressão / PDF</span>
+                <div class="space-x-2">
+                    <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-bold">
+                        <i class="fa-solid fa-print mr-1"></i> Imprimir / Baixar PDF
+                    </button>
+                    <button onclick="closePrintModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs px-4 py-2 rounded-lg font-bold">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Header Relatório -->
+            <div class="border-b-2 border-slate-900 pb-4 mb-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 id="print-title" class="text-2xl font-black text-slate-900"></h1>
+                        <p id="print-segment" class="text-sm font-bold text-slate-600 mt-1"></p>
+                    </div>
+                    <div class="text-right text-xs text-slate-500">
+                        <p id="print-date"></p>
+                        <p>PlanMaker STEAM</p>
+                    </div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
+                    <span><strong>Duração:</strong> <span id="print-duration"></span></span>
+                    <span><strong>Disciplinas:</strong> <span id="print-subjects"></span></span>
+                    <span><strong>Recursos Maker:</strong> <span id="print-techs"></span></span>
+                </div>
+            </div>
+
+            <!-- Corpo Relatório -->
+            <div class="space-y-6 text-sm text-slate-800">
+                <div>
+                    <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Desafio & Problematização</h3>
+                    <p id="print-challenge" class="leading-relaxed"></p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Habilidades BNCC Mapeadas</h3>
+                    <div id="print-bncc" class="space-y-1.5 text-xs"></div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Objetivos Pedagógicos</h3>
+                    <ul id="print-objectives" class="list-disc list-inside space-y-1"></ul>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Sequência Didática Passo a Passo</h3>
+                    <div class="space-y-3 text-xs">
+                        <div><strong>1. Engajar & Investigar:</strong> <p id="print-step-1" class="mt-0.5"></p></div>
+                        <div><strong>2. Explorar Conceitos:</strong> <p id="print-step-2" class="mt-0.5"></p></div>
+                        <div><strong>3. Prototipar & Programar:</strong> <p id="print-step-3" class="mt-0.5"></p></div>
+                        <div><strong>4. Testar & Avaliar:</strong> <p id="print-step-4" class="mt-0.5"></p></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 pt-4 border-t">
+                    <div>
+                        <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Materiais & Kits</h3>
+                        <ul id="print-materials" class="list-disc list-inside text-xs space-y-1"></ul>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 uppercase text-xs tracking-wider border-b pb-1 mb-2">Rubrica de Avaliação</h3>
+                        <div id="print-rubric" class="text-xs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & GEMINI AI ENGINE ADAPTED FOR 1st FUND TO 3rd HIGH SCHOOL -->
+    <script>
+        // GLOBAL STATE & AUTH LOGIC
+        let currentUser = null;
+        let currentGeneratedPlan = null;
+        let savedPlans = [];
+
+        // INITIALIZE APP & AUTH STATE ON LOAD
+        window.onload = function() {
+            checkAuthSession();
+            onStageChange();
+            loadSavedPlansFromStorage();
+            updateApiKeyStatusText();
+        };
+
+        // AUTHENTICATION CONTROLLER
+        function checkAuthSession() {
+            const savedUser = localStorage.getItem('steam_user_session');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('user-display-email').textContent = currentUser.email;
+            } else {
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            } else {
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+            }
+        }
+
+        function handleAuth(type) {
+            let email, name;
+            if (type === 'login') {
+                email = document.getElementById('auth-email').value.trim();
+                name = email.split('@')[0];
+            } else {
+                email = document.getElementById('reg-email').value.trim();
+                name = document.getElementById('reg-name').value.trim();
+            }
+
+            if (!email) return;
+
+            currentUser = { email: email, name: name, loggedAt: new Date().toISOString() };
+            localStorage.setItem('steam_user_session', JSON.stringify(currentUser));
+            
+            document.getElementById('auth-overlay').classList.add('hidden');
+            document.getElementById('user-display-email').textContent = email;
+            showToast(`Bem-vindo(a), ${name}! Acesso liberado.`, 'success');
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('steam_user_session');
+            currentUser = null;
+            document.getElementById('auth-overlay').classList.remove('hidden');
+            showToast('Sessão encerrada.', 'info');
+        }
+
+        // DOWNLOAD FULL SOURCE CODE (INDEX.HTML)
+        function downloadAppSourceCode() {
+            const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'planmaker_steam_completo.html';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('Código-fonte completo (index.html) baixado com sucesso!', 'success');
+        }
+
+        // DOWNLOAD SINGLE LESSON PLAN AS HTML
+        function downloadPlanHTML() {
+            if (!currentGeneratedPlan) return;
+            const p = currentGeneratedPlan;
+            const content = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Plano de Aula STEAM: ${p.title}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; color: #1e293b; }
+        h1 { color: #6d28d9; border-b: 2px solid #6d28d9; padding-bottom: 8px; }
+        .meta { background: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+        .box { border-left: 4px solid #10b981; background: #ecfdf5; padding: 12px; margin-bottom: 20px; }
+        .bncc-item { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <h1>${p.title}</h1>
+    <div class="meta">
+        <p><strong>Ano/Etapa:</strong> ${p.segment} | <strong>Duração:</strong> ${p.duration}</p>
+        <p><strong>Disciplinas:</strong> ${p.subjects.join(', ')}</p>
+        <p><strong>Recursos Maker:</strong> ${p.techs.join(', ')}</p>
+    </div>
+    <div class="box">
+        <h3>Desafio Central & Problematização</h3>
+        <p>${p.challenge}</p>
+    </div>
+    <h3>Habilidades BNCC</h3>
+    ${(p.bncc || []).map(b => `<div class="bncc-item"><strong>[${b.code}]</strong> ${b.desc}</div>`).join('')}
+    <h3>Objetivos Pedagógicos</h3>
+    <ul>${(p.objectives || []).map(o => `<li>${o}</li>`).join('')}</ul>
+    <h3>Passo a Passo da Aula</h3>
+    <ol>
+        <li><strong>Engajar:</strong> ${p.steps.step1 || ''}</li>
+        <li><strong>Explorar:</strong> ${p.steps.step2 || ''}</li>
+        <li><strong>Prototipar/Programar:</strong> ${p.steps.step3 || ''}</li>
+        <li><strong>Testar e Avaliar:</strong> ${p.steps.step4 || ''}</li>
+    </ol>
+    <h3>Materiais</h3>
+    <ul>${(p.materials || []).map(m => `<li>${m}</li>`).join('')}</ul>
+</body>
+</html>`;
+
+            const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Plano_${p.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('Plano individual exportado em HTML!', 'success');
+        }
+
+        // IMPORT DATABASE FROM JSON
+        function importDatabaseJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        savedPlans = imported;
+                        localStorage.setItem('steam_saved_plans', JSON.stringify(savedPlans));
+                        updateSavedCount();
+                        renderSavedPlans();
+                        showToast(`${savedPlans.length} planos importados com sucesso!`, 'success');
+                    } else {
+                        showToast('Formato JSON de arquivo inválido.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erro ao ler o arquivo JSON.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // DISCIPLINAS POR ETAPA DE ENSINO (BNCC)
+        const SUBJECTS_BY_STAGE = {
+            fund1: [
+                { name: 'Língua Portuguesa / Alfabetização', icon: 'fa-book text-pink-400' },
+                { name: 'Matemática Anos Iniciais', icon: 'fa-calculator text-cyan-400' },
+                { name: 'Ciências da Natureza', icon: 'fa-flask text-emerald-400' },
+                { name: 'Geografia & Meio Ambiente', icon: 'fa-earth-americas text-amber-400' },
+                { name: 'História & Comunidade', icon: 'fa-landmark text-orange-400' },
+                { name: 'Artes & Visualidade', icon: 'fa-palette text-purple-400' }
+            ],
+            fund2: [
+                { name: 'Ciências', icon: 'fa-flask text-emerald-400' },
+                { name: 'Matemática', icon: 'fa-calculator text-cyan-400' },
+                { name: 'Geografia', icon: 'fa-earth-americas text-amber-400' },
+                { name: 'História', icon: 'fa-landmark text-orange-400' },
+                { name: 'Língua Portuguesa', icon: 'fa-book text-pink-400' },
+                { name: 'Artes', icon: 'fa-palette text-purple-400' },
+                { name: 'Física / Introdução', icon: 'fa-bolt text-yellow-400' }
+            ],
+            medio: [
+                { name: 'Física', icon: 'fa-bolt text-yellow-400' },
+                { name: 'Química', icon: 'fa-vial text-emerald-400' },
+                { name: 'Biologia & Ecologia', icon: 'fa-leaf text-green-400' },
+                { name: 'Matemática Aplicada', icon: 'fa-square-root-variable text-cyan-400' },
+                { name: 'Filosofia / Ética Tecnológica', icon: 'fa-brain text-purple-400' },
+                { name: 'Sociologia & Mundo do Trabalho', icon: 'fa-users text-orange-400' },
+                { name: 'Língua Portuguesa & Produção', icon: 'fa-book text-pink-400' },
+                { name: 'Itinerários Formativos STEAM', icon: 'fa-diagram-project text-amber-400' }
+            ]
+        };
+
+        const YEARS_BY_STAGE = {
+            fund1: ['1º Ano do Ensino Fundamental', '2º Ano do Ensino Fundamental', '3º Ano do Ensino Fundamental', '4º Ano do Ensino Fundamental', '5º Ano do Ensino Fundamental'],
+            fund2: ['6º Ano do Ensino Fundamental', '7º Ano do Ensino Fundamental', '8º Ano do Ensino Fundamental', '9º Ano do Ensino Fundamental'],
+            medio: ['1º Ano do Ensino Médio', '2º Ano do Ensino Médio', '3º Ano do Ensino Médio']
+        };
+
+        // PRESETS AMPLOS (1º FUND AL 3º MÉDIO)
+        const PRESETS = [
+            {
+                stage: 'fund1',
+                year: '1º Ano do Ensino Fundamental',
+                title: 'Contação de Histórias Animada e Insetos Maker',
+                duration: '2 aulas (100 min)',
+                method: 'Ciclo de Aprendizagem Maker / 5Es',
+                subjects: ['Língua Portuguesa / Alfabetização', 'Ciências da Natureza', 'Artes & Visualidade'],
+                techs: ['LEGO Essential / WeDo 2.0', 'ScratchJr / Scratch 3.0', 'Sucata Reutilizável & Papelão Maker']
+            },
+            {
+                stage: 'fund2',
+                year: '7º Ano do Ensino Fundamental',
+                title: 'Estufa Automatizada com micro:bit e Irrigação Inteligente',
+                duration: '2 aulas (100 min)',
+                method: 'Aprendizagem Baseada em Projetos (PBL)',
+                subjects: ['Ciências', 'Matemática'],
+                techs: ['BBC micro:bit', 'Sucata Reutilizável & Papelão Maker']
+            },
+            {
+                stage: 'medio',
+                year: '2º Ano do Ensino Médio',
+                title: 'Sistema Antissísmico e Automação de Segurança com Arduino',
+                duration: 'Projeto (4 encontros)',
+                method: 'Design Thinking Edu',
+                subjects: ['Física', 'Matemática Aplicada', 'Itinerários Formativos STEAM'],
+                techs: ['Arduino / Circuitos Eletrônicos', 'Tinkercad 3D & Modelagem']
+            }
+        ];
+
+        // INITIAL DATABASE SEED WITH COMPLETE SPECTRUM (1st FUND to 3rd HIGH SCHOOL)
+        const INITIAL_SEED_PLANS = [
+            {
+                id: 'seed_fund1',
+                title: 'Contação de Histórias Animada e Insetos Polinizadores',
+                segment: '1º Ano do Ensino Fundamental',
+                duration: '2 aulas (100 min)',
+                method: 'Ciclo de Aprendizagem Maker / 5Es',
+                subjects: ['Língua Portuguesa / Alfabetização', 'Ciências da Natureza', 'Artes & Visualidade'],
+                techs: ['LEGO Essential / WeDo 2.0', 'Sucata Reutilizável & Papelão Maker'],
+                createdAt: '10/11/2026',
+                challenge: 'Como motorizar uma abelha ou borboleta de sucata para contar uma história sobre a importância da polinização das flores?',
+                bncc: [
+                    { code: 'EF01CI02', desc: 'Localizar, nomear e comparar as partes do corpo humano e de animais do convívio social.' },
+                    { code: 'EF01LP01', desc: 'Reconhecer que textos são lidos e escritos da esquerda para a direita e de cima para baixo.' },
+                    { code: 'EF15AR04', desc: 'Experimentar diferentes formas de expressão artística (desenho, pintura, colagem, escultura maker).' },
+                    { code: 'CG05', desc: 'Cultura Digital: Explorar ferramentas tecnológicas e motorização simples nos anos iniciais.' }
+                ],
+                objectives: [
+                    'Identificar o papel dos insetos polinizadores na natureza.',
+                    'Desenvolver a coordenação motora fina e narrativa oral através da criação de cenários de sucata.',
+                    'Montar um circuito motorizado simples com roldanas/blocos LEGO para mover o inseto.'
+                ],
+                steps: {
+                    step1: 'Engajar com uma roda de conversa e leitura contada do livro sobre o jardim das borboletas. Mostrar fotos reais dos insetos.',
+                    step2: 'Explorar as características dos insetos (asas, patas, antenas) e listar em cartaz as palavras chave da história.',
+                    step3: 'Construção da abelha com copinho de papel e caixa de ovo. Acoplamento do motor LEGO/polia para girar as asas.',
+                    step4: 'Apresentação teatral em duplas contando a história de como a abelha ajudou a flor a crescer.'
+                },
+                materials: ['Copos de papel', 'Caixas de ovo', 'Kits LEGO WeDo/Essential ou motores simples', 'Canetinhas e fitas'],
+                rubric: '• Expressão Oral (1-5 pts) | • Construção do Protótipo (1-5 pts) | • Identificação dos Insetos (1-5 pts)'
+            },
+            {
+                id: 'seed_fund2',
+                title: 'Estufa Automatizada com micro:bit e Irrigação Inteligente',
+                segment: '7º Ano do Ensino Fundamental',
+                duration: '2 aulas (100 min)',
+                method: 'Aprendizagem Baseada em Projetos (PBL)',
+                subjects: ['Ciências', 'Matemática'],
+                techs: ['BBC micro:bit', 'Sucata Reutilizável & Papelão Maker'],
+                createdAt: '09/11/2026',
+                challenge: 'Como criar um sistema automático de monitoramento de umidade do solo utilizando garrafas PET e a placa micro:bit?',
+                bncc: [
+                    { code: 'EF07CI02', desc: 'Diferenciar temperatura, calor e umidade em ecossistemas locais.' },
+                    { code: 'EF07MA17', desc: 'Resolver problemas envolvendo grandezas proporcionalmente diretas e leitura de dados analógicos.' },
+                    { code: 'CG05', desc: 'Cultura Digital: Compreender e criar soluções tecnológicas para problemas socioambientais.' }
+                ],
+                objectives: [
+                    'Compreender a condutividade da água no solo.',
+                    'Programar a leitura analógica no BBC micro:bit usando blocos MakeCode.',
+                    'Prototipar uma miniestufa sustentável.'
+                ],
+                steps: {
+                    step1: 'Debate sobre o consumo sustentável de água em hortas comunitárias.',
+                    step2: 'Leitura de valores de condutividade e conversão de dados analógicos (escala 0-1023).',
+                    step3: 'Montagem física em grupos com garrafa PET e programação do alarme de seca.',
+                    step4: 'Testes práticos com terra seca e molhada com registro de medições.'
+                },
+                materials: ['BBC micro:bit', 'Garrafas PET', 'Pregos/Fios Jumper', 'Mudas de plantas'],
+                rubric: '• Lógica MakeCode (1-5 pts) | • Montagem da Estufa (1-5 pts) | • Análise de Dados (1-5 pts)'
+            },
+            {
+                id: 'seed_medio',
+                title: 'Sistema Antissísmico e Automação Urbana com Arduino',
+                segment: '2º Ano do Ensino Médio',
+                duration: 'Projeto (4 encontros)',
+                method: 'Design Thinking Edu',
+                subjects: ['Física', 'Matemática Aplicada', 'Itinerários Formativos STEAM'],
+                techs: ['Arduino / Circuitos Eletrônicos', 'Tinkercad 3D & Modelagem'],
+                createdAt: '08/11/2026',
+                challenge: 'Como projetar uma estrutura predial capaz de dissipar ondas sísmicas e emitir alertas automáticos via acelerômetro Arduino?',
+                bncc: [
+                    { code: 'EM13CNT301', desc: 'Construir questões, elaborar hipóteses e predições sobre fenômenos físicos (ondas mecânicas, ressonância e amortecimento).' },
+                    { code: 'EM13MAT307', desc: 'Aplicar conceitos de geometria espacial e cálculo vetorial na análise de estruturas arquitetônicas.' },
+                    { code: 'CG02', desc: 'Pensamento Científico e Criativo: Investigar causas e propor protótipos de automação preventiva.' }
+                ],
+                objectives: [
+                    'Analisar frequência de ressonância e amortecimento em estruturas físicas.',
+                    'Modelar componentes no Tinkercad 3D para corte laser ou impressão 3D.',
+                    'Programar sensor acelerômetro MPU6050 em Arduino para acionar trava de emergência.'
+                ],
+                steps: {
+                    step1: 'Análise de estudos de caso reais de abalos sísmicos e engenharia preventiva no Japão.',
+                    step2: 'Cálculo da frequência natural de vibração de estruturas com diferentes alturas e massas.',
+                    step3: 'Construção da mesa de vibração motorizada e programação do sistema de alerta em C++/Arduino.',
+                    step4: 'Ensaio destrutivo simulado da maquete na mesa vibratória e gravação em slow-motion para análise.'
+                },
+                materials: ['Placa Arduino Uno', 'Sensor MPU6050 (Acelerômetro)', 'Servo Motores', 'Varetas de madeira e MDF'],
+                rubric: '• Rigor Físico (1-5 pts) | • Automação C++ (1-5 pts) | • Estabilidade Estrutural (1-5 pts)'
+            }
+        ];
+
+        // INIT ON LOAD
+        window.onload = function() {
+            onStageChange();
+            loadSavedPlansFromStorage();
+            updateApiKeyStatusText();
+        };
+
+        // STAGE CHANGE LISTENER
+        function onStageChange() {
+            const stage = document.getElementById('school-stage').value;
+            
+            // Populate Specific Years
+            const yearSelect = document.getElementById('specific-year');
+            const years = YEARS_BY_STAGE[stage] || [];
+            yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+            // Populate Subjects Checkboxes
+            const subjectsContainer = document.getElementById('subjects-container');
+            const subjects = SUBJECTS_BY_STAGE[stage] || [];
+            
+            document.getElementById('stage-subject-label').textContent = 
+                stage === 'fund1' ? 'BNCC Fund I (1º-5º)' :
+                stage === 'fund2' ? 'BNCC Fund II (6º-9º)' : 'BNCC Ensino Médio';
+
+            subjectsContainer.innerHTML = subjects.map((s, idx) => `
+                <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer p-1 rounded hover:bg-slate-800/40">
+                    <input type="checkbox" name="subject" value="${s.name}" ${idx < 2 ? 'checked' : ''} class="rounded border-slate-700 text-violet-600 focus:ring-violet-500 bg-slate-900">
+                    <span><i class="fa-solid ${s.icon} text-xs w-4"></i> ${s.name}</span>
+                </label>
+            `).join('');
+        }
+
+        function getApiKey() {
+            return localStorage.getItem('gemini_api_key') || (typeof window.GEMINI_API_KEY !== 'undefined' ? window.GEMINI_API_KEY : '');
+        }
+
+        function updateApiKeyStatusText() {
+            const key = getApiKey();
+            const textEl = document.getElementById('api-key-status-text');
+            if (textEl) {
+                textEl.textContent = key ? 'Chave Gemini Ativa' : 'Configurar Gemini API';
+            }
+        }
+
+        function openApiKeyModal() {
+            document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+            document.getElementById('apikey-modal').classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('apikey-modal').classList.add('hidden');
+        }
+
+        function saveApiKeyFromModal() {
+            const val = document.getElementById('gemini-api-key-input').value.trim();
+            if (val) {
+                localStorage.setItem('gemini_api_key', val);
+                showToast('Chave de API salva com sucesso!', 'success');
+            } else {
+                localStorage.removeItem('gemini_api_key');
+                showToast('Chave removida.', 'info');
+            }
+            updateApiKeyStatusText();
+            closeApiKeyModal();
+        }
+
+        // AI GENERATION FUNCTION USING GEMINI API WITH ETAPA ADAPTABILITY
+        async function generateLessonPlanWithAI() {
+            const title = document.getElementById('lesson-title').value.trim();
+            const stage = document.getElementById('school-stage').value;
+            const year = document.getElementById('specific-year').value;
+            const duration = document.getElementById('lesson-duration').value;
+            const method = document.getElementById('pedagogy-method').value;
+
+            const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(cb => cb.value);
+            const selectedTechs = Array.from(document.querySelectorAll('input[name="tech"]:checked')).map(cb => cb.value);
+
+            if (!title) {
+                showToast('Por favor, informe o tema da aula.', 'error');
+                return;
+            }
+            if (selectedSubjects.length === 0) {
+                showToast('Selecione ao menos 1 disciplina.', 'error');
+                return;
+            }
+            if (selectedTechs.length === 0) {
+                showToast('Selecione ao menos 1 tecnologia maker.', 'error');
+                return;
+            }
+
+            // Show UI Loading
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('plan-output-card').classList.add('hidden');
+            document.getElementById('ai-loading-state').classList.remove('hidden');
+
+            const apiKey = getApiKey();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Você é um Especialista em Pedagogia STEAM, Robótica Educacional e Normas Oficiais da BNCC (Base Nacional Comum Curricular do Brasil).
+Sua tarefa é gerar um Plano de Aula rigorosamente adaptado para a faixa etária/ano indicado (${year}).
+REGRAS PEDAGÓGICAS POR ETAPA:
+- Se for Ensino Fundamental I (1º ao 5º ano): Use linguagem lúdica, foco em contação de histórias, estímulo motor, materiais táteis/recicláveis e programação visual em blocos (ScratchJr, LEGO WeDo).
+- Se for Ensino Fundamental II (6º ao 9º ano): Foco em investigação científica, microcontroladores (micro:bit, Arduino básico) e raciocínio lógico.
+- Se for Ensino Médio (1º ao 3º ano): Foco em alta complexidade, automação real, C++/Python, conceitos avançados de física/química/matemática e itinerários formativos.
+
+IMPORTANTE: Forneça códigos de habilidades REAIS e EXATOS da BNCC condizentes com o ano escolar (Ex: EF01CI02 para 1º ano, EF07CI02 para 7º ano, EM13CNT301 para Ensino Médio).`;
+
+            const userQuery = `Gere um plano de aula completo para:
+Tema: "${title}"
+Ano Escolar / Faixa Etária: ${year}
+Duração: ${duration}
+Metodologia: ${method}
+Disciplinas Integradas: ${selectedSubjects.join(', ')}
+Ferramentas Maker/Robótica: ${selectedTechs.join(', ')}
+
+Retorne um JSON estrito conforme o esquema:
+{
+  "title": "Título Profissional do Projeto",
+  "challenge": "Descrição detalhada do desafio central ajustado para a maturidade do ano informado",
+  "bncc": [
+    { "code": "Código BNCC Específico do Ano", "desc": "Descrição exata da habilidade" }
+  ],
+  "objectives": ["Objetivo 1", "Objetivo 2", "Objetivo 3"],
+  "steps": {
+    "step1": "Passo 1: Engajar e Investigar",
+    "step2": "Passo 2: Explorar Conceitos Teóricos das Disciplinas",
+    "step3": "Passo 3: Prototipar e Programar (Prática Maker/Robótica)",
+    "step4": "Passo 4: Testar, Apresentar e Avaliar"
+  },
+  "materials": ["Item 1", "Item 2", "Item 3"],
+  "rubric": "Texto da rubrica formatado de avaliação"
+}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            title: { type: "STRING" },
+                            challenge: { type: "STRING" },
+                            bncc: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        code: { type: "STRING" },
+                                        desc: { type: "STRING" }
+                                    },
+                                    propertyOrdering: ["code", "desc"]
+                                }
+                            },
+                            objectives: { type: "ARRAY", items: { type: "STRING" } },
+                            steps: {
+                                type: "OBJECT",
+                                properties: {
+                                    step1: { type: "STRING" },
+                                    step2: { type: "STRING" },
+                                    step3: { type: "STRING" },
+                                    step4: { type: "STRING" }
+                                },
+                                propertyOrdering: ["step1", "step2", "step3", "step4"]
+                            },
+                            materials: { type: "ARRAY", items: { type: "STRING" } },
+                            rubric: { type: "STRING" }
+                        },
+                        propertyOrdering: ["title", "challenge", "bncc", "objectives", "steps", "materials", "rubric"]
+                    }
+                }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`Erro na API (${response.status})`);
+
+                const data = await response.json();
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!jsonText) throw new Error("Resposta inválida da IA");
+
+                const parsedAI = JSON.parse(jsonText);
+
+                const completePlan = {
+                    id: 'ai_plan_' + Date.now(),
+                    title: parsedAI.title || title,
+                    segment: year,
+                    duration: duration,
+                    method: method,
+                    subjects: selectedSubjects,
+                    techs: selectedTechs,
+                    createdAt: new Date().toLocaleDateString('pt-BR'),
+                    challenge: parsedAI.challenge,
+                    bncc: parsedAI.bncc || [],
+                    objectives: parsedAI.objectives || [],
+                    steps: parsedAI.steps || {},
+                    materials: parsedAI.materials || [],
+                    rubric: parsedAI.rubric || ""
+                };
+
+                currentGeneratedPlan = completePlan;
+                document.getElementById('ai-loading-state').classList.add('hidden');
+                renderPlanOutput(completePlan);
+                showToast(`Plano para o ${year} gerado com sucesso!`, 'success');
+
+            } catch (err) {
+                console.warn('Fallback para motor local devido a:', err);
+                const fallbackPlan = {
+                    id: 'plan_' + Date.now(),
+                    title: title,
+                    segment: year,
+                    duration: duration,
+                    method: method,
+                    subjects: selectedSubjects,
+                    techs: selectedTechs,
+                    createdAt: new Date().toLocaleDateString('pt-BR'),
+                    challenge: `Como aplicar conteúdos de ${selectedSubjects.join(' e ')} usando ${selectedTechs.join(', ')} para resolver o desafio "${title}" no ${year}?`,
+                    bncc: [
+                        { code: year.includes('1º') || year.includes('2º') ? 'EF01CI01' : 'EF07CI02', desc: 'Investigação prática de fenómenos e prototipagem guiada.' },
+                        { code: 'CG05', desc: 'Cultura Digital: Utilizar e criar soluções tecnológicas nos espaços escolares.' }
+                    ],
+                    objectives: [
+                        `Compreender conceitos práticos de ${selectedSubjects.join(' e ')}.`,
+                        `Prototipar uma solução utilizando ${selectedTechs.join(' e ')}.`,
+                        `Trabalhar colaborativamente promovendo o pensamento crítico.`
+                    ],
+                    steps: {
+                        step1: `Apresentação instigante sobre "${title}" adaptada para a turma do ${year}.`,
+                        step2: `Exploração conceitual das disciplinas (${selectedSubjects.join(', ')}).`,
+                        step3: `Construção prática utilizando ${selectedTechs.join(' e ')}.`,
+                        step4: `Apresentação dos resultados e roda de reflexão.`
+                    },
+                    materials: selectedTechs.concat(['Papelão, tesoura, fitas adesivas']),
+                    rubric: '• Colaboração (1-5 pts) | • Protótipo (1-5 pts) | • Compreensão Conceitual (1-5 pts)'
+                };
+
+                currentGeneratedPlan = fallbackPlan;
+                document.getElementById('ai-loading-state').classList.add('hidden');
+                renderPlanOutput(fallbackPlan);
+                showToast('Plano gerado com motor local otimizado!', 'info');
+            }
+        }
+
+        // RENDER GENERATED PLAN
+        function renderPlanOutput(plan) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('plan-output-card').classList.remove('hidden');
+
+            document.getElementById('out-title').textContent = plan.title;
+            document.getElementById('out-segment-badge').textContent = plan.segment;
+            document.getElementById('out-duration').textContent = plan.duration;
+            document.getElementById('out-method').textContent = plan.method;
+
+            // Badges
+            document.getElementById('out-subjects-tags').innerHTML = plan.subjects.map(s => `<span class="bg-violet-950 text-violet-300 border border-violet-800 text-[10px] px-2 py-0.5 rounded font-medium">${s}</span>`).join('');
+            document.getElementById('out-techs-tags').innerHTML = plan.techs.map(t => `<span class="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] px-2 py-0.5 rounded font-medium">${t}</span>`).join('');
+
+            document.getElementById('out-challenge').textContent = plan.challenge;
+
+            // BNCC Mapping Output (Detailed Card)
+            const bnccContainer = document.getElementById('out-bncc-detailed');
+            if (plan.bncc && plan.bncc.length > 0) {
+                bnccContainer.innerHTML = plan.bncc.map(b => `
+                    <div class="bg-slate-900 border border-violet-900/40 p-2.5 rounded-lg flex items-start space-x-2">
+                        <span class="bg-violet-600 text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded shrink-0">${b.code}</span>
+                        <p class="text-slate-300 text-xs leading-relaxed">${b.desc}</p>
+                    </div>
+                `).join('');
+            } else {
+                bnccContainer.innerHTML = `<p class="text-slate-400 text-xs">Competência Geral 5 da BNCC (Cultura Digital e Pensamento Computacional)</p>`;
+            }
+
+            // Lists
+            document.getElementById('out-objectives').innerHTML = plan.objectives.map(o => `<li>${o}</li>`).join('');
+
+            // Steps
+            document.getElementById('out-step-1').textContent = plan.steps.step1 || plan.steps.step_1 || '';
+            document.getElementById('out-step-2').textContent = plan.steps.step2 || plan.steps.step_2 || '';
+            document.getElementById('out-step-3').textContent = plan.steps.step3 || plan.steps.step_3 || '';
+            document.getElementById('out-step-4').textContent = plan.steps.step4 || plan.steps.step_4 || '';
+
+            // Materials & Rubric
+            document.getElementById('out-materials').innerHTML = plan.materials.map(m => `<li>${m}</li>`).join('');
+            document.getElementById('out-rubric').innerHTML = typeof plan.rubric === 'string' ? plan.rubric : '';
+        }
+
+        // DATABASE STORAGE LOGIC
+        function loadSavedPlansFromStorage() {
+            const raw = localStorage.getItem('steam_saved_plans');
+            if (raw) {
+                savedPlans = JSON.parse(raw);
+            } else {
+                savedPlans = [...INITIAL_SEED_PLANS];
+                localStorage.setItem('steam_saved_plans', JSON.stringify(savedPlans));
+            }
+            updateSavedCount();
+            renderSavedPlans();
+        }
+
+        function exportDatabaseJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedPlans, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `planmaker_banco_planos_${Date.now()}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Backup exportado em JSON!', 'success');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-white', 'bg-violet-600/30', 'border', 'border-violet-500/40');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`nav-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.add('text-white', 'bg-violet-600/30', 'border', 'border-violet-500/40');
+                activeBtn.classList.remove('text-slate-400');
+            }
+        }
+
+        function openPresetsModal() {
+            document.getElementById('presets-modal').classList.remove('hidden');
+        }
+
+        function closePresetsModal() {
+            document.getElementById('presets-modal').classList.add('hidden');
+        }
+
+        function applyPreset(index) {
+            const preset = PRESETS[index];
+            if (!preset) return;
+
+            document.getElementById('school-stage').value = preset.stage;
+            onStageChange();
+
+            document.getElementById('lesson-title').value = preset.title;
+            document.getElementById('specific-year').value = preset.year;
+            document.getElementById('lesson-duration').value = preset.duration;
+            document.getElementById('pedagogy-method').value = preset.method;
+
+            document.querySelectorAll('input[name="subject"]').forEach(cb => {
+                cb.checked = preset.subjects.includes(cb.value);
+            });
+
+            document.querySelectorAll('input[name="tech"]').forEach(cb => {
+                cb.checked = preset.techs.includes(cb.value);
+            });
+
+            closePresetsModal();
+            showToast(`Preset aplicado para ${preset.year}!`, 'success');
+        }
+
+        function resetForm() {
+            document.getElementById('steam-form').reset();
+            onStageChange();
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('plan-output-card').classList.add('hidden');
+            currentGeneratedPlan = null;
+        }
+
+        function saveCurrentPlan() {
+            if (!currentGeneratedPlan) return;
+            const exists = savedPlans.some(p => p.id === currentGeneratedPlan.id);
+            if (!exists) {
+                savedPlans.unshift(currentGeneratedPlan);
+                localStorage.setItem('steam_saved_plans', JSON.stringify(savedPlans));
+                updateSavedCount();
+                renderSavedPlans();
+                showToast('Plano salvo na biblioteca!', 'success');
+            } else {
+                showToast('Este plano já está salvo!', 'info');
+            }
+        }
+
+        function deletePlan(id) {
+            savedPlans = savedPlans.filter(p => p.id !== id);
+            localStorage.setItem('steam_saved_plans', JSON.stringify(savedPlans));
+            updateSavedCount();
+            renderSavedPlans();
+            showToast('Plano excluído da biblioteca.', 'info');
+        }
+
+        function loadSavedPlan(id) {
+            const plan = savedPlans.find(p => p.id === id);
+            if (!plan) return;
+            currentGeneratedPlan = plan;
+            renderPlanOutput(plan);
+            switchTab('generator');
+            showToast(`Plano "${plan.title}" carregado.`, 'success');
+        }
+
+        function updateSavedCount() {
+            document.getElementById('saved-count-badge').textContent = savedPlans.length;
+        }
+
+        function renderSavedPlans() {
+            const grid = document.getElementById('saved-plans-grid');
+            const empty = document.getElementById('empty-library');
+            const searchTerm = (document.getElementById('search-saved')?.value || '').toLowerCase();
+            const filterStage = document.getElementById('filter-stage-library')?.value || 'all';
+
+            const filtered = savedPlans.filter(p => {
+                const matchSearch = p.title.toLowerCase().includes(searchTerm) || 
+                                    p.segment.toLowerCase().includes(searchTerm) ||
+                                    p.subjects.some(s => s.toLowerCase().includes(searchTerm));
+                
+                let matchStage = true;
+                if (filterStage === 'Fund I') matchStage = p.segment.includes('Fundamental') && (p.segment.includes('1º') || p.segment.includes('2º') || p.segment.includes('3º') || p.segment.includes('4º') || p.segment.includes('5º'));
+                if (filterStage === 'Fund II') matchStage = p.segment.includes('Fundamental') && (p.segment.includes('6º') || p.segment.includes('7º') || p.segment.includes('8º') || p.segment.includes('9º'));
+                if (filterStage === 'Médio') matchStage = p.segment.includes('Médio');
+
+                return matchSearch && matchStage;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-slate-950 border border-slate-800 hover:border-violet-500/50 p-4 rounded-xl flex flex-col justify-between transition group">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] bg-violet-950 text-violet-300 border border-violet-800 px-2 py-0.5 rounded font-semibold">${p.segment}</span>
+                            <span class="text-[10px] text-slate-500">${p.createdAt}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-white group-hover:text-violet-300 transition line-clamp-2">${p.title}</h4>
+                        <div class="mt-2 text-[11px] text-slate-400">
+                            <span class="text-slate-500">Disciplinas:</span> ${p.subjects.join(', ')}
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-900 flex justify-between items-center">
+                        <button onclick="loadSavedPlan('${p.id}')" class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center space-x-1">
+                            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+                            <span>Abrir Plano</span>
+                        </button>
+                        <button onclick="deletePlan('${p.id}')" class="text-xs text-slate-500 hover:text-rose-400 transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // COPY TO CLIPBOARD
+        function copyPlanToClipboard() {
+            if (!currentGeneratedPlan) return;
+            const p = currentGeneratedPlan;
+            const bnccText = p.bncc ? p.bncc.map(b => `- [${b.code}] ${b.desc}`).join('\n') : '';
+            const text = `
+PLANO DE AULA STEAM & ROBÓTICA: ${p.title}
+Ano / Faixa Etária: ${p.segment} | Duração: ${p.duration}
+Disciplinas: ${p.subjects.join(', ')}
+Tecnologias: ${p.techs.join(', ')}
+
+DESAFIO CENTRAL:
+${p.challenge}
+
+HABILIDADES BNCC MAPEADAS:
+${bnccText}
+
+OBJETIVOS DE APRENDIZAGEM:
+${p.objectives.map(o => '- ' + o).join('\n')}
+
+ROTEIRO DA AULA (SEQUÊNCIA MAKER):
+1. Engajar & Investigar: ${p.steps.step1 || ''}
+2. Explorar Conceitos: ${p.steps.step2 || ''}
+3. Prototipar & Programar: ${p.steps.step3 || ''}
+4. Testar & Avaliar: ${p.steps.step4 || ''}
+
+MATERIAIS & KITS:
+${p.materials.map(m => '- ' + m).join('\n')}
+            `.trim();
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Plano copiado formatado para a área de transferência!', 'success');
+            } catch (err) {
+                showToast('Erro ao copiar texto.', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // PRINT / PDF EXPORT MODAL LOGIC
+        function openPrintModal() {
+            if (!currentGeneratedPlan) return;
+            const p = currentGeneratedPlan;
+
+            document.getElementById('print-title').textContent = p.title;
+            document.getElementById('print-date').textContent = `Data: ${p.createdAt}`;
+            document.getElementById('print-segment').textContent = p.segment;
+            document.getElementById('print-duration').textContent = p.duration;
+            document.getElementById('print-subjects').textContent = p.subjects.join(', ');
+            document.getElementById('print-techs').textContent = p.techs.join(', ');
+            document.getElementById('print-challenge').textContent = p.challenge;
+
+            document.getElementById('print-objectives').innerHTML = p.objectives.map(o => `<li>${o}</li>`).join('');
+            
+            const bnccPrint = document.getElementById('print-bncc');
+            if (p.bncc && p.bncc.length > 0) {
+                bnccPrint.innerHTML = p.bncc.map(b => `<p><strong>[${b.code}]</strong> ${b.desc}</p>`).join('');
+            } else {
+                bnccPrint.innerHTML = '<p>Competência Geral 5 da BNCC</p>';
+            }
+
+            document.getElementById('print-step-1').textContent = p.steps.step1 || '';
+            document.getElementById('print-step-2').textContent = p.steps.step2 || '';
+            document.getElementById('print-step-3').textContent = p.steps.step3 || '';
+            document.getElementById('print-step-4').textContent = p.steps.step4 || '';
+
+            document.getElementById('print-materials').innerHTML = p.materials.map(m => `<li>${m}</li>`).join('');
+            document.getElementById('print-rubric').innerHTML = typeof p.rubric === 'string' ? p.rubric : '';
+
+            document.getElementById('print-modal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('print-modal').classList.add('hidden');
+        }
+
+        // TOAST NOTIFICATION UTILITY
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-slate-800 border-slate-700 text-slate-200';
+            let icon = 'fa-circle-info text-cyan-400';
+            
+            if (type === 'success') {
+                bg = 'bg-slate-900 border-emerald-500/40 text-emerald-300';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'error') {
+                bg = 'bg-slate-900 border-rose-500/40 text-rose-300';
+                icon = 'fa-circle-exclamation text-rose-400';
+            }
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border ${bg} shadow-xl text-xs font-medium flex items-center space-x-2.5 transform transition duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
